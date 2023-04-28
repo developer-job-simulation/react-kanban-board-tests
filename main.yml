@@ -1,4 +1,4 @@
-name: <project-name-goes-here> Test Runner by Codebase Mentor
+name: React Kanban Board Test Runner by Codebase Mentor
 on:
   pull_request_target:
     branches: ["main"]
@@ -42,14 +42,14 @@ jobs:
       - run: rm -rf tests # remove any user provided test dir
       - uses: actions/checkout@v3 # checkout tests repo
         with:
-          repository: developer-job-simulation/<project-name-goes-here>-tests
+          repository: developer-job-simulation/react-kanban-board-tests
           path: tests
       - name: Install dependencies
         run: npm ci && cd tests && npm ci
       - name: start frontend
-        run: npm run dev:frontend &
+        run: npm run dev:client &
       - name: start backend
-        run: npm run dev:backend > /logs.txt &
+        run: npm run dev:server > /logs.txt &
       - name: Run Tests
         run: node tests/test.js
       - name: Upload logs
@@ -58,9 +58,9 @@ jobs:
         with:
           name: logs
           path: /logs.txt
-      - name: Upload screenshot
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: screenshot
-          path: /test.png
+#       - name: Upload screenshot
+#         if: failure()
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: screenshot
+#           path: /test.png
