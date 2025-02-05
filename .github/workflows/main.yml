@@ -1,8 +1,23 @@
 name: React Kanban Board Test Runner by Codebase Mentor
+
 on:
-  pull_request_target:
-    branches: ["main"]
+  workflow_call:
+    inputs:
+      pr_number:
+        description: 'The pull request number'
+        required: true
+        type: number
+      head_sha:
+        description: 'The SHA of the PR branch'
+        required: true
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'GitHub token for performing reviews'
+        required: true
+
 permissions: write-all
+
 jobs:
   check_is_signed_up:
     runs-on: ubuntu-latest
@@ -14,7 +29,7 @@ jobs:
       - name: Set up environment variables
         env:
           USER_ID: ${{ github.event.sender.id }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           echo "USER_ID=${USER_ID}" >> $GITHUB_ENV
           echo "GH_TOKEN=${GH_TOKEN}" >> $GITHUB_ENV
@@ -24,7 +39,7 @@ jobs:
         run: |
           status_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST -d "${USER_ID}" https://jobsim-pr-user-check.deno.dev)
           if [ $status_code -ne 200 ]; then
-            gh pr review ${{ github.event.number }} --comment --body "It looks like your GitHub account is not registered with JobSimulator.Dev. Please sign up at https://www.jobsimulator.dev to have your PR be tested automatically. Once you've signed up, close and open your PR to start the tests. Thanks!"
+            gh pr review ${{ inputs.pr_number }} --comment --body "It looks like your GitHub account is not registered with JobSimulator.Dev. Please sign up at https://www.jobsimulator.dev to have your PR be tested automatically. Once you've signed up, close and open your PR to start the tests. Thanks!"
             exit 1
           fi
   test:
@@ -35,12 +50,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }} # checkout the PR branch
-      - uses: actions/setup-node@v3 # setup node
+          ref: ${{ inputs.head_sha }}
+      - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: rm -rf tests # remove any user provided test dir
-      - uses: actions/checkout@v3 # checkout tests repo
+      - run: rm -rf tests
+      - uses: actions/checkout@v3
         with:
           repository: developer-job-simulation/react-kanban-board-tests
           path: tests
@@ -57,10 +72,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: logs
-          path: /logs.txt
-#       - name: Upload screenshot
-#         if: failure()
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: screenshot
-#           path: /test.png
+          path: /logs.txt 
